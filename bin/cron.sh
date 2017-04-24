@@ -1,2 +1,2 @@
 #!/bin/sh
-curl -s https://ba0a2f46.ngrok.io/cron > /dev/null
+curl -s https://7fca1ddd.ngrok.io/cron > /dev/null
