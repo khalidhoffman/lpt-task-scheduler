@@ -53,7 +53,7 @@ returns json array of tasks being scheduled
     count: Number
     tasks: [
         {
-            TaskNumId: Number,
+            taskNumId: Number,
             taskId: String,
             state: String,
             startTimestamp: String,

@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const express = require('express');
 const moment = require('moment');
 const _  = require('lodash');
@@ -6,10 +9,14 @@ const memoryCache = require('../services/memory-cache');
 const Tasks = require('../models/task');
 
 const router = express.Router();
+const readmeContent = fs.readFileSync(path.join(process.cwd(), '/README.md'));
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-    res.render('index', {title: 'LPT Request Scheduler'});
+    res.render('index', {
+        title: 'LPT Request Scheduler',
+        content: readmeContent
+    });
 });
 
 router.use('/cron', (req, res, next) => {
