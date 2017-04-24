@@ -18,7 +18,7 @@ describe('/schedule', function () {
         });
 
 
-        it('creates a new job', () => {
+        it('creates a new job', function () {
             this.timeout(10 * 1000);
 
             let startJobCount;
@@ -43,12 +43,6 @@ describe('/schedule', function () {
                 .then(res => {
                     tempScheduledTaskId = res.body.taskId;
 
-                    // fake a cron job initiated request
-                    return request.get('/cron')
-                        .expect(200)
-                })
-                .then(res => {
-
                     return request.get('/schedule/list')
                         .expect(200)
                 })
@@ -67,7 +61,7 @@ describe('/schedule', function () {
                 })
         });
 
-        it('hits a url at a specified time', () => {
+        it('hits a url at a specified time', function () {
 
             const testWaitDuration = 3 * 1000;
             const testEndpoint = `/stop-test/${Date.now()}`;
@@ -86,11 +80,6 @@ describe('/schedule', function () {
                 })
                 .expect(200)
                 .then(res => {
-                    // fake a cron job initiated request
-                    return request.get('/cron')
-                        .expect(200)
-                })
-                .then(() => {
                     return new Promise((resolve, reject) => {
                         setTimeout(resolve, testWaitDuration);
                     })
@@ -102,7 +91,7 @@ describe('/schedule', function () {
 
         });
 
-        it('responds with json when "Accept" header is set to "application/json"', () => {
+        it('responds with json when "Accept" header is set to "application/json"', function () {
             this.timeout(7 * 1000);
 
             let testTaskId;
@@ -124,11 +113,6 @@ describe('/schedule', function () {
                     expect(res.body.taskId).to.exist;
                     testTaskId = res.body.taskId;
                     return Promise.resolve();
-                })
-                .then(() => {
-                    // init tasks
-                    return request.get('/cron')
-                        .expect(200)
                 })
                 .then(() => {
                     // clean up after test. removes temporary scheduled task
@@ -177,11 +161,6 @@ describe('/schedule', function () {
                 .expect(200)
                 .then(res => {
                     taskId = res.body.taskId;
-
-                    // fake a cron job initiated request
-                    return request.get('/cron')
-                })
-                .then(res => {
 
                     console.log(`cancelling task (${taskId})`);
 

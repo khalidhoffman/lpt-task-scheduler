@@ -1,57 +1,57 @@
-const _ = require('lodash');
 const express = require('express');
 const moment = require('moment');
-const request = require('superagent');
 const shortid = require('shortid');
 
 const Tasks = require('../models/task');
 const memoryCache = require('../services/memory-cache');
+const scheduler = require('../services/scheduler');
 
 const router = express.Router();
-const scheduledTaskCache = {};
 
 router.post('/', function (req, res, next) {
-    const now = new Date();
     const taskId = shortid.generate();
     const taskState = req.body._state || 'uninitialized';
     const callback = req.body.url || req.body.callback;
     const payload = req.body.payload;
     const callbackMethod = (req.body.method || 'get').toLowerCase();
     const callbackContentType = req.body.contentType || 'json';
-
-    let startTimestamp;
-    let waitDuration;
-
-    if (req.body.time) {
-        startTimestamp = moment(req.body.time);
-        waitDuration = startTimestamp.diff(now);
-    } else if (req.body.wait) {
-        waitDuration = parseInt(req.body.wait);
-        startTimestamp = moment().add(waitDuration, 'milliseconds');
-    } else {
-        waitDuration = 60 * 1000;
-    }
-
-    if (!(waitDuration > 0)) {
-        waitDuration = 0;
-    }
-
-    Tasks.create({
+    const taskProps = {
         taskId,
         name: taskId,
         state: taskState,
-        startTimestamp,
+        startTimestamp: moment(),
         payload,
         callback,
         callbackContentType,
         callbackMethod
-    });
+    };
 
-    res.json({
-        taskId,
-        waitDuration,
-        startTimestamp
-    });
+    let waitDuration = process.env.DEFAULT_CALLBACK_DELAY_MS || 60 * 1000;
+
+    if (req.body.time) {
+        taskProps.startTimestamp = moment(req.body.time);
+    }
+
+    if (req.body.wait) {
+        waitDuration = parseInt(req.body.wait);
+        taskProps.startTimestamp = moment().add(waitDuration, 'milliseconds');
+    }
+
+    Tasks.create(taskProps)
+        .then(() => {
+            return scheduler.update()
+        })
+        .then(() => {
+            res.json({
+                taskId,
+                waitDuration,
+                startTimestamp: taskProps.startTimestamp
+            });
+        })
+        .catch(next);
+
+
+
 });
 
 router.get('/list', (req, res, next) => {
