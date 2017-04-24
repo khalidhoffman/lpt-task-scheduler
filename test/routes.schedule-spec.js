@@ -11,7 +11,7 @@ const testServer = nock(/test/);
 
 describe('/schedule', function () {
 
-    describe('/', () => {
+    describe('POST /', () => {
 
         afterEach(() => {
             nock.cleanAll();
@@ -41,6 +41,7 @@ describe('/schedule', function () {
                         .expect(200)
                 })
                 .then(res => {
+                    expect(res.body.taskId).to.exist;
                     tempScheduledTaskId = res.body.taskId;
 
                     return request.get('/schedule/list')
@@ -61,7 +62,7 @@ describe('/schedule', function () {
                 })
         });
 
-        it('hits a url at a specified time', function () {
+        it('makes a callback request at a specified time', function () {
 
             const testWaitDuration = 3 * 1000;
             const testEndpoint = `/stop-test/${Date.now()}`;

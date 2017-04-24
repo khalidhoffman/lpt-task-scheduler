@@ -1,25 +1,26 @@
-#!/usr/bin/env node
-
 /**
  * Module dependencies.
  */
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
 
-var app = require('../app');
-var debug = require('debug')('lpt-task-scheduler:server');
-var http = require('http');
+const ngrok = require('ngrok');
+const app = require('../app');
+const debug = require('debug')('lpt-task-scheduler:server');
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+const server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -81,19 +82,51 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 
+function initNgrok (port) {
+
+    return new Promise((resolve, reject) => {
+
+        ngrok.connect(parseInt(port), (err, domain) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+
+            debug(`Listening at ${domain}`);
+            resolve(domain);
+        })
+    })
+}
+
+function updateCronScript (domain) {
+    const cronScript = `#!/bin/sh\ncurl -s ${domain}/cron > /dev/null`;
+
+    return new Promise((resolve, reject) => {
+        fs.writeFile(path.join(process.cwd(), '/bin/cron.sh'), cronScript, (err) => {
+            err ? console.error(err) : debug('updated cron.sh')
+        })
+    })
+}
+
 function onListening() {
-    var addr = server.address();
-    var bind = typeof addr === 'string'
+    const addr = server.address();
+    const bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
     debug('Listening on ' + bind);
-    if (process.env.NGROK) {
-        require('ngrok').connect(parseInt(addr.port), (err, domain) => {
-            if (err) {
-                console.error(err);
-            }
 
-            debug(`Listening at ${domain}`);
-        })
+    let startUp = Promise.resolve(process.env.DOMAIN || 'http://localhost:3000');
+
+    if (process.env.NGROK) {
+        startUp = initNgrok;
     }
+
+    startUp(parseInt(addr.port || process.env.PORT))
+        .then((domain) => {
+            return updateCronScript(domain)
+        })
+        .catch((err) => {
+            console.error(err);
+        })
 }
