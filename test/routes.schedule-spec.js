@@ -65,30 +65,42 @@ describe('/schedule', function () {
         it('makes a callback request at a specified time', function () {
 
             const testWaitDuration = 3 * 1000;
+            const testMinumumWaitDuration = 1.5 * 1000;
             const testEndpoint = `/stop-test/${Date.now()}`;
             this.timeout(15 * 1000);
 
-            const dummyTaskAPI = nock(/test/)
+            const dummyTaskAPI = nock(/execute-test/)
                 .get(testEndpoint)
                 .reply(200);
 
             return request.post('/schedule')
                 .accept('json')
                 .send({
-                    callback: url.resolve('http://test.com', testEndpoint),
+                    callback: url.resolve('http://execute-test.com', testEndpoint),
                     callbackMethod: 'get',
                     wait: testWaitDuration
                 })
                 .expect(200)
                 .then(res => {
-                    return new Promise((resolve, reject) => {
-                        setTimeout(resolve, testWaitDuration);
-                    })
+                    return Promise.all([
+                        () => {
+                            return new Promise((resolve, reject) => {
+                                setTimeout(() => {
+                                    expect(dummyTaskAPI.isDone()).to.eql(false, 'dummy task was executed too early');
+                                    resolve()
+                                }, testMinumumWaitDuration);
+                            })
+                        },
+                        () => {
+                            return new Promise((resolve, reject) => {
+                                setTimeout(() => {
+                                    expect(dummyTaskAPI.isDone()).to.eql(true, 'dummy task should have been executed');
+                                    resolve()
+                                }, testWaitDuration);
+                            })
+                        }
+                    ])
                 })
-                .then(() => {
-                    expect(dummyTaskAPI.isDone()).to.eql(true, 'dummy task should have been executed');
-                    return Promise.resolve();
-                });
 
         });
 
@@ -148,14 +160,14 @@ describe('/schedule', function () {
 
             const testWaitDuration = 3 * 1000;
             const testEndpoint = `/stop-test/${Date.now()}`;
-            const dummyTaskAPI = nock(/test/)
+            const dummyTaskAPI = nock(/delete-test/)
                 .get(testEndpoint)
                 .reply(200);
 
             return request.post('/schedule')
                 .accept('json')
                 .send({
-                    callback: url.resolve('http://test.com', testEndpoint),
+                    callback: url.resolve('http://delete-test.com', testEndpoint),
                     callbackMethod: 'get',
                     wait: testWaitDuration
                 })
