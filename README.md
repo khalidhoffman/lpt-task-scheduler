@@ -71,5 +71,5 @@ returns json array of tasks being scheduled
 # Development
 
 ### Todo
--[ ] handle data cleanup over long periods of time. (tasks should probably be purged entirely from memory cache after a few days post completion)
--[ ] move server with cron job to docker image for portability and easy setup
+- [ ] handle data cleanup over long periods of time. (tasks should probably be purged entirely from memory cache after a few days post completion)
+- [ ] move server with cron job to docker image for portability and easy setup
