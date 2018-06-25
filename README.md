@@ -12,7 +12,7 @@
 
 # Usage
 1. `npm start`;
-2. `have some sort of cron job hit /cron every 5 minutes (per default)`;
+2. have some sort of cron job hit /cron every 5 minutes (per default);
     - this should match your env `SCHEDULER_MAX` and `SCHEDULER_MAX_UNIT` settings
 
 ## API
