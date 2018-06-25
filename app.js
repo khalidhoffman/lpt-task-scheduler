@@ -8,8 +8,8 @@ const bodyParser = require('body-parser');
 const debug = require('debug');
 
 
-const index = require('./routes/index');
-const schedule = require('./routes/schedule');
+const mainRouter = require('./routes/main');
+const scheduleRouter = require('./routes/schedule');
 
 const app = express();
 const print = debug('task-scheduler:server');
@@ -26,8 +26,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', index);
-app.use('/schedule', schedule);
+app.use('/', mainRouter);
+app.use('/schedule', scheduleRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

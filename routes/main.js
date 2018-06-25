@@ -9,8 +9,8 @@ const router = express.Router();
 const readmeContent = fs.readFileSync(path.join(process.cwd(), '/README.md'));
 
 /* GET home page. */
-router.get('/', (req, res, next) => {
-    res.render('index', {
+router.get(['/', '/home', '/readme'], (req, res, next) => {
+    res.render('home', {
         title: 'Request Scheduler',
         content: readmeContent
     });
