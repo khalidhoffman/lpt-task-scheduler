@@ -11,7 +11,7 @@ const readmeContent = fs.readFileSync(path.join(process.cwd(), '/README.md'));
 /* GET home page. */
 router.get('/', (req, res, next) => {
     res.render('index', {
-        title: 'LPT Request Scheduler',
+        title: 'Request Scheduler',
         content: readmeContent
     });
 });
