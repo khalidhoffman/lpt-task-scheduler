@@ -1,5 +1,14 @@
 # Installation
 1. `npm install`
+2. Define environment variables. `.env` files are supported. Example `.env` file:
+    ```
+    MYSQL_HOST=localhost
+    MYSQL_DATABASE=task_scheduler
+    MYSQL_USERNAME=XXXXXXXXXXXXXXX
+    MYSQL_PASSWORD=XXXXXXXXXXXXXXX
+    SCHEDULER_MAX=5
+    SCHEDULER_MAX_UNIT=minute
+    ``` 
 
 # Usage
 1. `npm start`;
