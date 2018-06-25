@@ -7,7 +7,7 @@ const http = require('http');
 
 const ngrok = require('ngrok');
 const app = require('../app');
-const debug = require('debug')('lpt-task-scheduler:server');
+const debug = require('debug')('task-scheduler:server');
 
 /**
  * Get port from environment and store in Express.

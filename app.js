@@ -12,7 +12,7 @@ const index = require('./routes/index');
 const schedule = require('./routes/schedule');
 
 const app = express();
-const print = debug('lpt-task-scheduler:server');
+const print = debug('task-scheduler:server');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
