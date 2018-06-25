@@ -1,18 +1,20 @@
 const url = require('url');
 
 const nock = require('nock');
-const chai = require('chai');
+const {expect} = require('chai');
 const supertest = require('supertest');
 
-const expect = chai.expect;
 const app = require('../app');
+const sequelize = require('../services/sequelize');
 const request = supertest(app);
-const testServer = nock(/test/);
 
 describe('/schedule', function () {
 
-    describe('POST /', () => {
+    before(function(){
+        return sequelize.sync({force: true})
+    });
 
+    describe('POST /', () => {
 
         it('creates a new job', function () {
             this.timeout(10 * 1000);
@@ -38,20 +40,18 @@ describe('/schedule', function () {
                     expect(res.body.taskId).to.exist;
                     tempScheduledTaskId = res.body.taskId;
 
-                    return request.get('/schedule/list')
-                        .expect(200)
+                    return request.get('/schedule/list').expect(200)
                 })
                 .then(res => {
-                    expect(res.body.length).to.eql(startJobCount + 1, 'there should be one more job');
+                    const taskIds = res.body.map(task => task.taskId);
+                    expect(taskIds.includes(tempScheduledTaskId)).to.eql(true, `list should contain task ${tempScheduledTaskId}`);
 
-                    return request.del(`/schedule/${tempScheduledTaskId}`)
-                        .expect(200);
+                    return request.del(`/schedule/${tempScheduledTaskId}`).expect(200);
                 })
                 .catch(err => {
                     console.error('request err: %s', err);
                     // attempt to delete test task
-                    return request.del(`/schedule/${tempScheduledTaskId}`)
-                        .expect(200)
+                    return request.del(`/schedule/${tempScheduledTaskId}`).expect(200)
                         .then(() => Promise.reject(err));
                 })
         });
@@ -59,9 +59,10 @@ describe('/schedule', function () {
         it('makes a callback request at a specified time', function () {
 
             const testWaitDuration = 3 * 1000;
-            const testMinumumWaitDuration = 1.5 * 1000;
+            const testMinWaitDuration = testWaitDuration / 2;
+            const testMaxWaitDuration = testWaitDuration * 1.5;
             const testEndpoint = `/some-endpoint/${Date.now()}`;
-            this.timeout(15 * 1000);
+            this.timeout(testWaitDuration * 5);
 
             const dummyTaskAPI = nock(/execute-test/)
                 .get(testEndpoint)
@@ -72,7 +73,7 @@ describe('/schedule', function () {
                 .send({
                     callback: url.resolve('http://execute-test.com', testEndpoint),
                     callbackMethod: 'get',
-                    wait: testWaitDuration - 100
+                    wait: testWaitDuration
                 })
                 .expect(200)
                 .then(res => {
@@ -81,13 +82,13 @@ describe('/schedule', function () {
                             setTimeout(() => {
                                 expect(dummyTaskAPI.isDone()).to.eql(false, 'dummy task was executed too early');
                                 resolve()
-                            }, testMinumumWaitDuration);
+                            }, testMinWaitDuration);
                         }),
                         new Promise((resolve, reject) => {
                             setTimeout(() => {
                                 expect(dummyTaskAPI.isDone()).to.eql(true, 'dummy task should have been executed');
                                 resolve()
-                            }, testWaitDuration);
+                            }, testMaxWaitDuration);
                         })
                     ])
                 })
@@ -168,7 +169,7 @@ describe('/schedule', function () {
                         .expect(200)
                 })
                 .then(res => {
-                    return new Promise((resolve, reject) => {
+                    return new Promise((resolve) => {
                         setTimeout(resolve, testWaitDuration);
                     })
                 })
