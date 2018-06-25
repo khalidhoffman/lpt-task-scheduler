@@ -33,21 +33,13 @@ router.post('/', function (req, res, next) {
     }
 
     if (req.body.wait) {
-        waitDuration = parseInt(req.body.wait);
+        waitDuration = Number(req.body.wait);
         taskProps.startTimestamp = moment().add(waitDuration, 'milliseconds');
     }
 
-    Tasks.create(taskProps)
-        .then(() => {
-            return scheduler.update()
-        })
-        .then(() => {
-            res.json({
-                taskId,
-                waitDuration,
-                startTimestamp: taskProps.startTimestamp
-            });
-        })
+    return Tasks.create(taskProps)
+        .then(() => scheduler.update())
+        .then(() => res.json({taskId, waitDuration, startTimestamp: taskProps.startTimestamp}))
         .catch(next);
 
 
@@ -55,8 +47,7 @@ router.post('/', function (req, res, next) {
 });
 
 router.get('/list', (req, res, next) => {
-    res.json(memoryCache.list().map(taskMeta => taskMeta.model ? taskMeta.model.dataValues : taskMeta));
-
+    res.json(memoryCache.list().map(taskMeta => taskMeta.model ? taskMeta.model.toJSON() : taskMeta));
 });
 
 router.use([
@@ -65,11 +56,6 @@ router.use([
 ], (req, res, next) => {
     const taskId = req.params.id;
     const taskMeta = memoryCache.get(taskId);
-    const taskRemovalParams = {
-        where: {
-            taskId: taskId
-        }
-    };
 
     if (taskMeta) {
 
@@ -80,13 +66,11 @@ router.use([
                 console.log(`(${req.params.id}) cleared timeout`);
                 const prevTaskState = taskMeta.model.dataValues.state;
                 const taskState = prevTaskState !== 'done' ? 'cancelled' : 'done';
+
                 taskMeta.model.update({state: taskState})
                     .then(() => {
                         memoryCache.remove(taskId);
-                        res.json({
-                            state: taskState,
-                            taskId: taskId
-                        });
+                        res.json({state: taskState, taskId});
                     })
                     .catch(next);
                 return;

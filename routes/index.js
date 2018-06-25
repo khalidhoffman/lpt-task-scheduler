@@ -18,7 +18,7 @@ router.get('/', (req, res, next) => {
 
 router.use('/cron', (req, res, next) => {
     scheduler.update()
-        .then((result) => res.json(result))
+        .then((tasks) => res.json({count: tasks.length, tasks}))
         .catch(next)
 });
 

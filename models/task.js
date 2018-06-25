@@ -30,39 +30,32 @@ const modelAttrs = {
 
 const modelMethods = {
     instanceMethods: {
+        /**
+         * @desc task.start() is  a member function we defined in the task model
+         * @return {{model: modelMethods, _promise: Promise<any>, _timeoutId: number | Object | *}} - an object containing everything you could ever want to know about a timeout
+         */
         start: function () {
             let _timeoutId;
-            let callback;
+            let _callback;
 
             const waitDuration = moment(this.startTimestamp).diff(moment());
-            const taskUpdates = {
-                id: shortid.generate(),
-                state: 'waiting'
-            };
 
             const beforeStart = () => {
                 return this.update({state: 'executing'})
             };
 
             const onDone = () => {
-                callback();
+                _callback();
                 return this.update({state: 'done'})
-                    .then(() => {
-                        return Promise.resolve()
-                    })
             };
             const onFailure = (err) => {
-                callback(err);
+                _callback(err);
                 return this.update({state: `errored - ${err.toString()}`})
-                    .then(() => {
-                        return Promise.reject(err)
-                    })
+                    .then(() => Promise.reject(err))
             };
 
-
-            const task = new Promise((resolve, reject) => {
-                // wizardry. sorry bout it;
-                callback = resolve;
+            const _promise = new Promise((resolve, reject) => {
+                _callback = (err, result) => err ? reject(err) : resolve(result);
             });
 
             _timeoutId = setTimeout(() => {
@@ -79,8 +72,7 @@ const modelMethods = {
 
             return {
                 model: this,
-                updates: taskUpdates,
-                _promise: task,
+                _promise,
                 _timeoutId
             }
         }
